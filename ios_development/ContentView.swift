@@ -8,54 +8,81 @@
 import SwiftUI
 
 struct ContentView: View {
-    
     @State private var count: Int = 0
-    // Fixed: @State must be capitalized
     @State private var timeLeft: Int = 10
     @State private var timer: Timer?
+    @State private var showScore = false
+    
+    // Position state
+    @State private var buttonPosition: CGPoint = CGPoint(x: 200, y: 300)
     
     var body: some View {
-        VStack {
-            Text("\(count)")
-                .font(.system(size: 100))
-                .padding(.bottom, 50)
-            
-            Button(action: {
-                count += 1
-            }) {
-                Text("Tap Me")
-                    .padding(.horizontal, 80)
-                    .padding(.vertical, 30)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(15)
-            }
-            .disabled(timeLeft == 0)
-            // Countdown text
-            Text("Time remaining: \(timeLeft)")
-                .font(.system(size: 20))
-                .padding(.top, 20)
-                .foregroundColor(.gray)
-                .onAppear {
-                    startTimer()
+        GeometryReader { geometry in
+            ZStack {
+                VStack {
+                    Text("\(count)")
+                        .font(.system(size: 70))
+                    
+                    Text("Time remaining: \(timeLeft)")
+                        .foregroundColor(.gray)
                 }
+                .position(x: geometry.size.width / 2, y: 100)
+                
+                // The moving button
+                Button(action: {
+                    count += 1
+                }) {
+                    Text("Tap Me")
+                        .padding(.horizontal, 30)
+                        .padding(.vertical, 20)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(15)
+                }
+                .position(buttonPosition)
+                // Smooth animation for position changes
+                .animation(.easeInOut(duration: 0.5), value: buttonPosition)
+                .disabled(timeLeft == 0)
+            }
+            .onAppear {
+                startTimer(in: geometry.size)
+            }
         }
-        .padding()
+        .sheet(isPresented: $showScore) {
+            // ... your existing sheet code ...
+            VStack(spacing: 20) {
+                Text("Game Over!")
+                Text("Final Score: \(count)")
+                Button("Play Again") { resetGame() }
+            }
+        }
     }
     
-    func startTimer() {
-        // Fixed: Parameter name is 'withTimeInterval', not 'withTimerInterval'
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+    func startTimer(in size: CGSize) {
+        // Timer for game countdown
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             if timeLeft > 0 {
                 timeLeft -= 1
             } else {
-                // Fixed: Added missing closing parenthesis
                 timer?.invalidate()
+                showScore = true
+            }
+        }
+        
+        // Timer for button movement every 2 seconds
+        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+            if timeLeft > 0 {
+                let randomX = CGFloat.random(in: 50...(size.width - 50))
+                let randomY = CGFloat.random(in: 150...(size.height - 100))
+                buttonPosition = CGPoint(x: randomX, y: randomY)
             }
         }
     }
-}
-
-#Preview {
-    ContentView()
+    
+    func resetGame() {
+        count = 0
+        timeLeft = 10
+        showScore = false
+        // Re-start timer logic here
+    }
 }
