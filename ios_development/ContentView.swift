@@ -30,7 +30,7 @@ struct ContentView: View {
                     .foregroundColor(.white)
                     .cornerRadius(15)
             }
-            
+            .disabled(timeLeft == 0)
             // Countdown text
             Text("Time remaining: \(timeLeft)")
                 .font(.system(size: 20))
