@@ -29,10 +29,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		EF492E872FDD652400CCB946 = {
+		EF2B67642FF69963006F77CD /* New Group */ = {
 			isa = PBXGroup;
 			children = (
 				EF492E922FDD652400CCB946 /* ios_development */,
+			);
+			path = "New Group";
+			sourceTree = "<group>";
+		};
+		EF492E872FDD652400CCB946 = {
+			isa = PBXGroup;
+			children = (
+				EF2B67642FF69963006F77CD /* New Group */,
 				EF492E912FDD652400CCB946 /* Products */,
 			);
 			sourceTree = "<group>";
