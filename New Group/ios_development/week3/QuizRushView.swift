@@ -33,8 +33,7 @@ struct QuizRushView: View {
             await viewModel.loadGame()
         }
     }
-    
-    // MARK: - Gameplay Interface
+
     private var gameplayInterface: some View {
         VStack(spacing: 20) {
             // Header stats
@@ -83,8 +82,7 @@ struct QuizRushView: View {
             }
         }
     }
-    
-    // MARK: - Results Summary
+
     private var resultsSummary: some View {
         VStack(spacing: 20) {
             Text("Round Finished!")

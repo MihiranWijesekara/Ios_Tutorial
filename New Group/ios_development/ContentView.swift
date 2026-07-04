@@ -69,8 +69,7 @@ struct ContentView: View {
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.75), value: gameState)
     }
-    
-    // MARK: - 1. Start Menu View
+
     private var startMenuView: some View {
         VStack(spacing: 35) {
             Spacer()
@@ -139,8 +138,7 @@ struct ContentView: View {
             .padding(.horizontal, 20)
         }
     }
-    
-    // MARK: - 2. Gameplay View
+
     private var gamePlayView: some View {
         GeometryReader { proxy in
             ZStack {
@@ -234,8 +232,7 @@ struct ContentView: View {
             }
         }
     }
-    
-    // MARK: - 3. Game Over View
+
     private var gameOverView: some View {
         VStack(spacing: 30) {
             Spacer()
@@ -309,8 +306,7 @@ struct ContentView: View {
             }
         }
     }
-    
-    // MARK: - Core Execution Logic Mechanics
+
     
     private var minXBoundary: CGFloat { 60 }
     private var maxXBoundary: CGFloat { playAreaSize.width - 60 }
@@ -396,7 +392,6 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Extensions & Color Parsing Utilities
 extension Color {
     init(hex: String) {
         let scanner = Scanner(string: hex)
