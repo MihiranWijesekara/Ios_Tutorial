@@ -1,32 +1,25 @@
 //
-//  Card.swift
+//  GameLevel.swift
 //  ios_development
 //
-//  Created by student5 on 2026-07-02.
+//  Created by student5 on 2026-07-04.
 //
 
 import SwiftUI
 
-// Struct modeling a single card in the grid
-struct Card: Identifiable {
-    let id = UUID()
-    var isLit: Bool = false
-}
-
-// Enum defining level progression parameters
 enum GameLevel: Int, CaseIterable {
     case L1 = 1
     case L2
     case L3
     case L4
     
-    // Determine level by seconds elapsed
-    static func getLevel(for secondsElapsed: Int) -> GameLevel {
-        switch secondsElapsed {
-        case 0..<15:   return .L1   // 0-15s
-        case 15..<30:  return .L2   // 15-30s
-        case 30..<45:  return .L3   // 30-45s
-        default:       return .L4   // 45s to end
+    // Points target required to finish the current level
+    var targetScore: Int {
+        switch self {
+        case .L1: return 50
+        case .L2: return 120
+        case .L3: return 200
+        case .L4: return 300 // Final win condition milestone
         }
     }
     
@@ -40,13 +33,15 @@ enum GameLevel: Int, CaseIterable {
         }
     }
     
-    // Dynamic columns for LazyVGrid layout
+    // Dynamic columns matching assignment specs
     var gridColumns: [GridItem] {
         switch self {
-        case .L1, .L2:
-            return [GridItem(.flexible()), GridItem(.flexible())]
-        case .L3, .L4:
-            return [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
+        case .L1:
+            return [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())] // 3 cards single row
+        case .L2, .L3:
+            return [GridItem(.flexible()), GridItem(.flexible())] // 2 columns layout
+        case .L4:
+            return [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())] // 3x3 grid layout
         }
     }
     
@@ -65,7 +60,7 @@ enum GameLevel: Int, CaseIterable {
         return self == .L4 ? 2 : 1
     }
     
-    // Bonus Feature: Distinct glow colors per level
+    // Distinct glow colors per level
     var glowColor: Color {
         switch self {
         case .L1: return .green
@@ -74,5 +69,9 @@ enum GameLevel: Int, CaseIterable {
         case .L4: return .purple
         }
     }
+    
+    // Helper to advance sequence manually
+    func next() -> GameLevel? {
+        return GameLevel(rawValue: self.rawValue + 1)
+    }
 }
-

@@ -10,7 +10,12 @@ struct LightItUpView: View {
     @State private var timeRemaining = 60
     @State private var currentLevel: GameLevel = .L1
     @State private var isPlaying = false
+    
+    // Modals Control Triggers
     @State private var showGameOver = false
+    @State private var gameOverReason = ""
+    @State private var showLevelCompleteModal = false
+    @State private var showVictoryModal = false
     @State private var levelUpFlash = false
     
     // Timers
@@ -19,20 +24,39 @@ struct LightItUpView: View {
     
     var body: some View {
         ZStack {
+            // Setup assignment themed background color canvas
+            Color(red: 0.08, green: 0.11, blue: 0.13)
+                .ignoresSafeArea()
+            
             VStack(spacing: 20) {
                 // Header Stat Panel
                 HStack {
                     VStack(alignment: .leading) {
-                        Text("Score: \(score)").font(.title2).bold()
-                        Text("Level: \(currentLevel.rawValue)").font(.subheadline).foregroundColor(currentLevel.glowColor)
+                        Text("Score: \(score)")
+                            .font(.title2).bold()
+                            .foregroundColor(.white)
+                        Text("Level: \(currentLevel.rawValue)")
+                            .font(.subheadline).bold()
+                            .foregroundColor(currentLevel.glowColor)
                     }
                     Spacer()
                     VStack(alignment: .trailing) {
-                        Text("Time: \(timeRemaining)s").font(.title2).bold()
-                        Text("Lives: \(String(repeating: "❤️", count: lives))").font(.caption)
+                        Text("Time: \(timeRemaining)s")
+                            .font(.title2).bold()
+                            .foregroundColor(.white)
+                        Text("Lives: \(String(repeating: "❤️", count: lives))")
+                            .font(.caption)
                     }
                 }
                 .padding(.horizontal)
+                
+                // Progress tracker indicator bar
+                ProgressView(value: min(Double(score), Double(currentLevel.targetScore)), total: Double(currentLevel.targetScore))
+                    .progressViewStyle(LinearProgressViewStyle(tint: currentLevel.glowColor))
+                    .padding(.horizontal)
+                Text("Target to pass: \(currentLevel.targetScore) pts")
+                    .font(.caption2)
+                    .foregroundColor(.gray)
                 
                 Spacer()
                 
@@ -46,12 +70,11 @@ struct LightItUpView: View {
                         }
                     }
                     .padding(24)
-                    .id(currentLevel) // Re-render grid when structure layout updates
+                    .id(currentLevel) // Re-render grid layout structures properly when changes occur
                 } else {
                     Button(action: startGame) {
                         Text("START GAME")
-                            .font(.title3)
-                            .bold()
+                            .font(.title3).bold()
                             .foregroundColor(.white)
                             .padding()
                             .frame(maxWidth: 220)
@@ -65,15 +88,29 @@ struct LightItUpView: View {
             
             // Level Up Flash Overlay Notification
             if levelUpFlash {
-                Color(currentLevel.glowColor)
+                currentLevel.glowColor
                     .opacity(0.3)
                     .ignoresSafeArea()
                     .transition(.opacity)
             }
             
-            // Game Over Summary Window
+            // POPUP OVERLAY WINDOW 1: Level Completed Interstitial Break
+            if showLevelCompleteModal, let nextLevel = currentLevel.next() {
+                LevelCompleteModalView(completedLevel: currentLevel, nextLevel: nextLevel) {
+                    advanceToNextLevel()
+                }
+            }
+            
+            // POPUP OVERLAY WINDOW 2: Total Game Won Completion Clear
+            if showVictoryModal {
+                GameVictoryModalView(finalScore: score, isNewHigh: score > storedHighScore) {
+                    resetAndRestart()
+                }
+            }
+            
+            // POPUP OVERLAY WINDOW 3: Game Over Failure Screen
             if showGameOver {
-                GameOverView(finalScore: score, isNewHigh: score > storedHighScore) {
+                GameOverView(finalScore: score, isNewHigh: score > storedHighScore, reason: gameOverReason) {
                     resetAndRestart()
                 }
             }
@@ -90,6 +127,8 @@ struct LightItUpView: View {
         timeRemaining = 60
         currentLevel = .L1
         showGameOver = false
+        showLevelCompleteModal = false
+        showVictoryModal = false
         isPlaying = true
         generateCards()
         setupGameClock()
@@ -101,56 +140,34 @@ struct LightItUpView: View {
         cycleLitCards()
     }
     
-    // Global ticking down logic
+    // Global clock ticking down logic
     func setupGameClock() {
         gameTimer?.invalidate()
         gameTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            guard isPlaying else { return }
+            guard isPlaying && !showLevelCompleteModal && !showVictoryModal && !showGameOver else { return }
             
             if timeRemaining > 1 {
                 timeRemaining -= 1
-                checkLevelProgression()
             } else {
                 timeRemaining = 0
+                gameOverReason = "Out of Time!"
                 endGame()
             }
         }
     }
     
-    // Handles shuffling positions based on speed variables
+    // Handles shuffling active card selections
     func setupFlashIntervalClock() {
         flashTimer?.invalidate()
         flashTimer = Timer.scheduledTimer(withTimeInterval: currentLevel.litDuration, repeats: true) { _ in
-            guard isPlaying else { return }
+            guard isPlaying && !showLevelCompleteModal && !showVictoryModal && !showGameOver else { return }
             cycleLitCards()
         }
     }
     
-    // Tracks milestones along the 60-second runtime track
-    func checkLevelProgression() {
-        let elapsed = 60 - timeRemaining
-        let calculatedLevel = GameLevel.getLevel(for: elapsed)
-        
-        if calculatedLevel != currentLevel {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                currentLevel = calculatedLevel
-                levelUpFlash = true
-            }
-            generateCards()
-            setupFlashIntervalClock() // Regenerate interval intervals
-            
-            // Automatically turn off flash notification overlay banner
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                withAnimation { levelUpFlash = false }
-            }
-        }
-    }
-    
     func cycleLitCards() {
-        // Reset all active cards
         for i in 0..<cards.count { cards[i].isLit = false }
         
-        // Randomly illuminate tiles matching configuration caps
         let countToLit = min(currentLevel.simultaneousLitCount, cards.count)
         var litIndices = Set<Int>()
         
@@ -166,15 +183,64 @@ struct LightItUpView: View {
         }
     }
     
-    // Core Action Processing Logic
+    // Core Action Click processing
     func handleTap(on card: Card) {
+        // Guard against clicking when modals are actively displayed
+        guard !showLevelCompleteModal && !showVictoryModal && !showGameOver else { return }
         guard let index = cards.firstIndex(where: { $0.id == card.id }) else { return }
         
         if cards[index].isLit {
             score += 10
-            cards[index].isLit = false // Clear state immediately on success
+            cards[index].isLit = false
+            checkScoreProgression() // Check if score passed level thresholds
         } else {
             applyPenalty()
+        }
+    }
+    
+    // Evaluates score against the current level target milestone requirements
+    func checkScoreProgression() {
+        if score >= currentLevel.targetScore {
+            // Check if there is an upcoming level, otherwise trigger global victory
+            if let _ = currentLevel.next() {
+                pauseGameForModal()
+                withAnimation {
+                    showLevelCompleteModal = true
+                }
+            } else {
+                // No higher levels exist: Game Completed!
+                pauseGameForModal()
+                withAnimation {
+                    showVictoryModal = true
+                }
+            }
+        }
+    }
+    
+    // Clears the board temporarily and suspends clocks safely
+    func pauseGameForModal() {
+        for i in 0..<cards.count { cards[i].isLit = false }
+        cleanUpTimers()
+    }
+    
+    // Progression execution called by clicking the Next Button on the modal view
+    func advanceToNextLevel() {
+        if let nextLevel = currentLevel.next() {
+            currentLevel = nextLevel
+            showLevelCompleteModal = false
+            
+            // Flash notification screen sequence overlay
+            withAnimation(.easeInOut(duration: 0.2)) {
+                levelUpFlash = true
+            }
+            
+            generateCards()
+            setupGameClock()
+            setupFlashIntervalClock()
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                withAnimation { levelUpFlash = false }
+            }
         }
     }
     
@@ -183,6 +249,7 @@ struct LightItUpView: View {
             lives -= 1
         } else {
             lives = 0
+            gameOverReason = "No Lives Remaining!"
             endGame()
         }
     }
@@ -198,6 +265,8 @@ struct LightItUpView: View {
     
     func resetAndRestart() {
         showGameOver = false
+        showVictoryModal = false
+        showLevelCompleteModal = false
         startGame()
     }
     
@@ -208,6 +277,7 @@ struct LightItUpView: View {
         flashTimer = nil
     }
 }
+
 #Preview {
     LightItUpView()
 }
