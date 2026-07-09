@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import CoreLocation
 
 class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
@@ -41,3 +42,4 @@ class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
 }
+
