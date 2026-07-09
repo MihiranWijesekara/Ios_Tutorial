@@ -8,7 +8,7 @@ struct CardTile: View {
     var body: some View {
         Button(action: action) {
             RoundedRectangle(cornerRadius: 16)
-                .fill(card.isLit ? level.glowColor : Color(.secondarySystemBackground))
+                .fill(card.isLit ? level.glowColor : Color(.darkGray))
                 .aspectRatio(1.0, contentMode: .fit)
                 .shadow(color: card.isLit ? level.glowColor.opacity(0.6) : .clear, radius: 10)
                 .scaleEffect(card.isLit ? 1.04 : 1.0)

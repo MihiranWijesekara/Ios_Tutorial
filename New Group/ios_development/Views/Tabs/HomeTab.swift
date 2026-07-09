@@ -121,7 +121,7 @@ struct HomeTab: View {
                         }
                         
                         // Arena 3: Quiz Rush
-                        NavigationLink(destination: QuizRushView(locationService: locationService)) {
+                        NavigationLink(destination: QuizRushContainerView()) {
                             HStack(spacing: 16) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)

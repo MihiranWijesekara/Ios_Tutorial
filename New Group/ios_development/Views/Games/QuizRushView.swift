@@ -1,99 +1,73 @@
 import SwiftUI
 
 struct QuizRushView: View {
-    @EnvironmentObject var locationService: LocationService
-    @StateObject private var viewModel: QuizRushVM
-    
-    init(locationService: LocationService) {
-        _viewModel = StateObject(wrappedValue: QuizRushVM(locationService: locationService))
-    }
-    
+    @ObservedObject var viewModel: QuizRushVM
+
     var body: some View {
         ZStack {
             Color(red: 0.05, green: 0.05, blue: 0.07)
                 .ignoresSafeArea()
-            
-            switch viewModel.state {
-            case .loading:
-                ProgressView("Fetching Live Trivia...")
-                    .progressViewStyle(CircularProgressViewStyle())
-                    .foregroundColor(.white)
-                
-            case .failed:
-                VStack(spacing: 20) {
-                    Text("Network Error!")
-                        .font(.title)
-                        .foregroundColor(.red)
-                    Button("Retry") {
-                        Task { await viewModel.loadGame() }
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-                
-            case .loaded:
-                gameplayInterface
-                
-            case .finished:
-                ResultView(
-                    score: viewModel.score,
-                    highScore: viewModel.storedHighScore,
-                    gameMode: .quizRush,
-                    onPlayAgain: {
-                        Task { await viewModel.loadGame() }
-                    }
-                )
-            }
-        }
-        .task {
-            await viewModel.loadGame()
+
+            gameplayInterface
         }
     }
-    
+
     private var gameplayInterface: some View {
         VStack(spacing: 20) {
+            // ── Header ──
             HStack {
-                Text("Question: \(viewModel.currentIndex + 1) / 10")
+                Text("Q \(viewModel.currentIndex + 1) / \(viewModel.totalQuestions)")
                 Spacer()
-                Text("Streak: \(viewModel.streak) 🔥")
+                Text("🔥 \(viewModel.streak)")
                 Spacer()
                 Text("Score: \(viewModel.score)")
             }
-            .font(.subheadline)
+            .font(.subheadline.bold())
             .foregroundColor(.white)
-            .padding()
-            
+            .padding(.horizontal)
+            .padding(.top, 16)
+
             Spacer()
-            
+
+            // ── Question ──
             if let current = viewModel.currentQuestion {
-                Text(current.question)
+                Text(current.question
+                    .replacingOccurrences(of: "&amp;",  with: "&")
+                    .replacingOccurrences(of: "&quot;", with: "\"")
+                    .replacingOccurrences(of: "&#039;", with: "'")
+                    .replacingOccurrences(of: "&lt;",   with: "<")
+                    .replacingOccurrences(of: "&gt;",   with: ">"))
                     .font(.title3)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
-                    .padding()
-                
+                    .padding(.horizontal)
+
                 Spacer()
-                
+
+                // ── Answers ──
                 VStack(spacing: 12) {
                     ForEach(viewModel.currentAnswers, id: \.self) { answer in
-                        Button(action: {
-                            withAnimation {
-                                viewModel.handleAnswer(answer)
-                            }
-                        }) {
-                            Text(answer)
+                        Button {
+                            withAnimation { viewModel.handleAnswer(answer) }
+                        } label: {
+                            Text(answer
+                                .replacingOccurrences(of: "&amp;",  with: "&")
+                                .replacingOccurrences(of: "&quot;", with: "\"")
+                                .replacingOccurrences(of: "&#039;", with: "'"))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.white.opacity(0.06))
-                                .cornerRadius(10)
+                                .background(Color.white.opacity(0.08))
+                                .cornerRadius(12)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.18), lineWidth: 1)
                                 )
                         }
                     }
                 }
-                .padding()
+                .padding(.horizontal)
+                .padding(.bottom, 24)
             }
         }
     }
