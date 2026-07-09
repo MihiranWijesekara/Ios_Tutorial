@@ -51,6 +51,7 @@ struct LightItUpView: View {
         .navigationTitle("Light It Up")
         .navigationBarTitleDisplayMode(.inline)
         .onDisappear(perform: viewModel.cleanUpTimers)
+        .toolbar(.hidden, for: .tabBar)
     }
     
     private var startMenuView: some View {
@@ -118,6 +119,7 @@ struct LightItUpView: View {
                         .font(.caption)
                 }
             }
+            .toolbar(.hidden, for: .tabBar)
             .padding(.horizontal)
             
             ProgressView(value: min(Double(viewModel.score), Double(viewModel.currentLevel.targetScore)), total: Double(viewModel.currentLevel.targetScore))

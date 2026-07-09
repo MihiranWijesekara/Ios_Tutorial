@@ -26,6 +26,7 @@ struct TapFrenzyView: View {
                 )
             }
         }
+        .toolbar(.hidden, for: .tabBar)
         .onDisappear {
             viewModel.invalidateRunningTimers()
         }

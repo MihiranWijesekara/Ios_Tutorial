@@ -61,6 +61,8 @@ struct SettingsTab: View {
                 notificationService.checkPermissionStatus()
             }
         }
+        
+        
     }
     
     private func loadTime() {

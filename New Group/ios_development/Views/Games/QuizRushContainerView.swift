@@ -50,5 +50,6 @@ struct QuizRushContainerView: View {
         .onAppear {
             vm.updateLocationService(locationService)
         }
+        .toolbar(.hidden, for: .tabBar)
     }
 }
