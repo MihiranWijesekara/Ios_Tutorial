@@ -14,6 +14,9 @@ class QuizRushVM: ObservableObject {
     private let api = TriviaAPI()
     var locationService: LocationService
 
+    // ── Current difficulty being played ──
+    @Published var difficulty: QuizDifficulty = .easy
+
     @Published var state: GameState = .loading
     @Published var questions: [TriviaQuestion] = []
     @Published var currentIndex: Int = 0
@@ -24,6 +27,9 @@ class QuizRushVM: ObservableObject {
     @Published var correctCount: Int = 0
     @Published var wrongCount: Int = 0
     @Published var errorMessage: String? = nil
+
+    // ── Result of the finished game ──
+    @Published var passed: Bool = false
 
     var currentQuestion: TriviaQuestion? {
         guard questions.indices.contains(currentIndex) else { return nil }
@@ -38,7 +44,13 @@ class QuizRushVM: ObservableObject {
 
     init(locationService: LocationService) {
         self.locationService = locationService
-        self.storedHighScore = UserDefaults.standard.integer(forKey: "highScore_quizRush")
+        self.storedHighScore = UserDefaults.standard.integer(forKey: difficulty.highScoreKey)
+    }
+
+    // Call this whenever a new difficulty is selected before loading.
+    func setDifficulty(_ diff: QuizDifficulty) {
+        difficulty = diff
+        storedHighScore = UserDefaults.standard.integer(forKey: diff.highScoreKey)
     }
 
     func loadGame() async {
@@ -47,7 +59,7 @@ class QuizRushVM: ObservableObject {
             errorMessage = nil
         }
         do {
-            let fetched = try await api.fetchQuestions()
+            let fetched = try await api.fetchQuestions(difficulty: difficulty)
             await MainActor.run {
                 self.questions     = fetched
                 self.currentIndex  = 0
@@ -55,6 +67,7 @@ class QuizRushVM: ObservableObject {
                 self.streak        = 0
                 self.correctCount  = 0
                 self.wrongCount    = 0
+                self.passed        = false
                 prepareAnswers()
                 state = .loaded
             }
@@ -94,11 +107,21 @@ class QuizRushVM: ObservableObject {
     }
 
     private func endGame() {
-        state = .finished
+        // Determine pass/fail
+        passed = correctCount >= difficulty.passMarkCorrect
+
+        // Persist completion so the next difficulty unlocks
+        if passed {
+            UserDefaults.standard.set(true, forKey: difficulty.completedKey)
+        }
+
+        // Update high score for this difficulty
         if score > storedHighScore {
             storedHighScore = score
-            UserDefaults.standard.set(storedHighScore, forKey: "highScore_quizRush")
+            UserDefaults.standard.set(storedHighScore, forKey: difficulty.highScoreKey)
         }
+
+        state = .finished
         saveGameSession()
     }
 

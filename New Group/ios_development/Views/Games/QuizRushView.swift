@@ -15,15 +15,30 @@ struct QuizRushView: View {
     private var gameplayInterface: some View {
         VStack(spacing: 20) {
             // ── Header ──
-            HStack {
-                Text("Q \(viewModel.currentIndex + 1) / \(viewModel.totalQuestions)")
-                Spacer()
-                Text("🔥 \(viewModel.streak)")
-                Spacer()
-                Text("Score: \(viewModel.score)")
+            VStack(spacing: 6) {
+                HStack {
+                    Text("Q \(viewModel.currentIndex + 1) / \(viewModel.totalQuestions)")
+                    Spacer()
+                    Text("🔥 \(viewModel.streak)")
+                    Spacer()
+                    Text("Score: \(viewModel.score)")
+                }
+                .font(.subheadline.bold())
+                .foregroundColor(.white)
+
+                // Difficulty + pass-mark row
+                HStack(spacing: 6) {
+                    Text(viewModel.difficulty.icon)
+                    Text(viewModel.difficulty.displayName)
+                        .fontWeight(.semibold)
+                    Spacer()
+                    Text("Pass: \(viewModel.difficulty.passMarkCorrect)/10 ✓")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.55))
+                }
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.75))
             }
-            .font(.subheadline.bold())
-            .foregroundColor(.white)
             .padding(.horizontal)
             .padding(.top, 16)
 

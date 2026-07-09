@@ -5,6 +5,7 @@ struct TriviaQuestion: Codable, Identifiable {
     let question: String
     let correctAnswer: String
     let incorrectAnswers: [String]
+    let difficulty: String   // "easy" | "medium" | "hard"
 
     var allAnswers: [String] {
         (incorrectAnswers + [correctAnswer]).shuffled()
@@ -14,6 +15,7 @@ struct TriviaQuestion: Codable, Identifiable {
         case question
         case correctAnswer   = "correct_answer"
         case incorrectAnswers = "incorrect_answers"
+        case difficulty
     }
 }
 

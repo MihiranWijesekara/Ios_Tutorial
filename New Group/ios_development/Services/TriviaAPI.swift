@@ -1,9 +1,9 @@
 import Foundation
 
 class TriviaAPI {
-    /// Fetches 10 random multiple-choice trivia questions.
-    func fetchQuestions() async throws -> [TriviaQuestion] {
-        let urlString = "https://opentdb.com/api.php?amount=10&type=multiple"
+    /// Fetches 10 multiple-choice trivia questions filtered by difficulty.
+    func fetchQuestions(difficulty: QuizDifficulty) async throws -> [TriviaQuestion] {
+        let urlString = "https://opentdb.com/api.php?amount=10&type=multiple&difficulty=\(difficulty.apiValue)"
         guard let url = URL(string: urlString) else {
             throw URLError(.badURL)
         }
